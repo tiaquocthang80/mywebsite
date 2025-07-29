@@ -168,39 +168,48 @@ backend:
 frontend:
   - task: "Frontend Integration with Backend APIs"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/components/MolarityCalculator.jsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Integrated frontend with backend APIs - replaced mock data with real API calls to load chemicals, perform calculations, and manage history. Added toast notifications for user feedback."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Frontend successfully integrates with backend APIs. Chemical dropdown loads 20 chemicals from GET /api/chemicals. Calculation workflow works: NaCl selection → mass/volume input → POST /api/calculate → accurate results displayed. Custom molar mass mode functional. All API calls use correct REACT_APP_BACKEND_URL + '/api' format."
 
   - task: "Calculation History UI"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/components/MolarityCalculator.jsx"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Added collapsible history section showing recent calculations with timestamps and ability to clear history"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: History UI works correctly. Collapsible section displays calculation entries with chemical names, results, and timestamps. History automatically updates after new calculations. Found 19+ calculation entries during testing, showing proper persistence."
 
   - task: "Toast Notification System"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/App.js, /app/frontend/src/components/ui/toaster.jsx"
     stuck_count: 0
     priority: "low"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Added Toaster component to App.js for user feedback on successful calculations and error handling"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Toast notification system integrated and functional. Success toasts appear after calculations showing molarity results. Toaster component properly imported in App.js. Error handling works - no results displayed for invalid inputs."
 
 metadata:
   created_by: "main_agent"
