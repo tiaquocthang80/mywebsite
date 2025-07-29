@@ -6,46 +6,134 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
-import { Calculator, Beaker, FlaskConical, Atom } from 'lucide-react';
-import { chemicalDatabase } from '../utils/mockData';
+import { Calculator, Beaker, FlaskConical, Atom, History, Trash2 } from 'lucide-react';
+import { useToast } from '../hooks/use-toast';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const MolarityCalculator = () => {
+  const [chemicals, setChemicals] = useState([]);
   const [selectedChemical, setSelectedChemical] = useState('');
   const [customMolarMass, setCustomMolarMass] = useState('');
   const [mass, setMass] = useState('');
   const [volume, setVolume] = useState('');
   const [volumeUnit, setVolumeUnit] = useState('L');
   const [result, setResult] = useState(null);
+  const [calculationHistory, setCalculationHistory] = useState([]);
   const [showFormula, setShowFormula] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
-  const calculateMolarity = () => {
-    if (!mass || !volume) return;
-    
-    const chemical = chemicalDatabase.find(c => c.id === selectedChemical);
-    const molarMass = chemical ? chemical.molarMass : parseFloat(customMolarMass);
-    
-    if (!molarMass) return;
-    
-    const massInGrams = parseFloat(mass);
-    const volumeInLiters = volumeUnit === 'L' ? parseFloat(volume) : parseFloat(volume) / 1000;
-    
-    const moles = massInGrams / molarMass;
-    const molarity = moles / volumeInLiters;
-    
-    setResult({
-      molarity: molarity.toFixed(4),
-      moles: moles.toFixed(4),
-      molarMass: molarMass,
-      volumeInLiters: volumeInLiters,
-      chemical: chemical ? chemical.name : 'Chất tùy chỉnh'
-    });
+  // Load chemicals from backend
+  useEffect(() => {
+    loadChemicals();
+    loadCalculationHistory();
+  }, []);
+
+  const loadChemicals = async () => {
+    try {
+      const response = await axios.get(`${API}/chemicals`);
+      setChemicals(response.data);
+    } catch (error) {
+      console.error('Error loading chemicals:', error);
+      toast({
+        title: "Lỗi",
+        description: "Không thể tải danh sách chất hóa học",
+        variant: "destructive"
+      });
+    }
   };
 
-  useEffect(() => {
-    if (mass && volume && (selectedChemical || customMolarMass)) {
-      calculateMolarity();
+  const loadCalculationHistory = async () => {
+    try {
+      const response = await axios.get(`${API}/calculations?limit=20`);
+      setCalculationHistory(response.data);
+    } catch (error) {
+      console.error('Error loading calculation history:', error);
     }
-  }, [mass, volume, selectedChemical, customMolarMass, volumeUnit]);
+  };
+
+  const calculateMolarity = async () => {
+    if (!mass || !volume) {
+      toast({
+        title: "Thông tin thiếu",
+        description: "Vui lòng nhập đầy đủ khối lượng và thể tích",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!selectedChemical && !customMolarMass) {
+      toast({
+        title: "Thông tin thiếu",
+        description: "Vui lòng chọn chất hóa học hoặc nhập khối lượng mol phân tử",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const requestData = {
+        chemical_id: selectedChemical || null,
+        custom_molar_mass: customMolarMass ? parseFloat(customMolarMass) : null,
+        mass: parseFloat(mass),
+        volume: parseFloat(volume),
+        volume_unit: volumeUnit
+      };
+
+      const response = await axios.post(`${API}/calculate`, requestData);
+      const calculation = response.data;
+      
+      setResult({
+        molarity: calculation.molarity.toFixed(4),
+        moles: calculation.moles.toFixed(4),
+        molarMass: calculation.molar_mass,
+        volumeInLiters: calculation.volume_in_liters,
+        chemical: calculation.chemical_name
+      });
+
+      // Reload calculation history
+      loadCalculationHistory();
+      
+      toast({
+        title: "Tính toán thành công",
+        description: `Nồng độ mol: ${calculation.molarity.toFixed(4)} M`,
+      });
+
+    } catch (error) {
+      console.error('Error calculating:', error);
+      const errorMessage = error.response?.data?.detail || "Có lỗi xảy ra khi tính toán";
+      toast({
+        title: "Lỗi tính toán",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearHistory = async () => {
+    try {
+      await axios.delete(`${API}/calculations`);
+      setCalculationHistory([]);
+      toast({
+        title: "Đã xóa",
+        description: "Lịch sử tính toán đã được xóa",
+      });
+    } catch (error) {
+      console.error('Error clearing history:', error);
+      toast({
+        title: "Lỗi",
+        description: "Không thể xóa lịch sử tính toán",
+        variant: "destructive"
+      });
+    }
+  };
 
   const resetCalculator = () => {
     setSelectedChemical('');
@@ -57,9 +145,13 @@ const MolarityCalculator = () => {
     setShowFormula(false);
   };
 
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleString('vi-VN');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8 animate-fade-in">
           <div className="flex justify-center items-center gap-3 mb-4">
@@ -94,13 +186,13 @@ const MolarityCalculator = () => {
                       <SelectValue placeholder="Chọn chất hóa học từ danh sách" />
                     </SelectTrigger>
                     <SelectContent>
-                      {chemicalDatabase.map((chemical) => (
+                      {chemicals.map((chemical) => (
                         <SelectItem key={chemical.id} value={chemical.id}>
                           <div className="flex items-center gap-2">
                             <Atom className="w-4 h-4" />
                             <span>{chemical.name}</span>
                             <Badge variant="secondary" className="ml-2">
-                              {chemical.molarMass} g/mol
+                              {chemical.molar_mass} g/mol
                             </Badge>
                           </div>
                         </SelectItem>
@@ -170,6 +262,13 @@ const MolarityCalculator = () => {
                 {/* Action Buttons */}
                 <div className="flex gap-3">
                   <Button
+                    onClick={calculateMolarity}
+                    className="flex-1"
+                    disabled={loading}
+                  >
+                    {loading ? 'Đang tính...' : 'Tính Toán'}
+                  </Button>
+                  <Button
                     onClick={() => setShowFormula(!showFormula)}
                     variant="outline"
                     className="flex-1"
@@ -188,7 +287,7 @@ const MolarityCalculator = () => {
             </Card>
           </div>
 
-          {/* Result Section */}
+          {/* Right Sidebar */}
           <div className="space-y-6">
             {/* Formula Display */}
             {showFormula && (
@@ -260,6 +359,65 @@ const MolarityCalculator = () => {
                 </CardContent>
               </Card>
             )}
+
+            {/* History Toggle */}
+            <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between text-lg">
+                  <div className="flex items-center gap-2">
+                    <History className="w-5 h-5 text-blue-600" />
+                    Lịch Sử Tính Toán
+                  </div>
+                  <Button
+                    onClick={() => setShowHistory(!showHistory)}
+                    variant="ghost"
+                    size="sm"
+                  >
+                    {showHistory ? 'Ẩn' : 'Hiện'}
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              {showHistory && (
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">
+                        {calculationHistory.length} tính toán
+                      </span>
+                      {calculationHistory.length > 0 && (
+                        <Button
+                          onClick={clearHistory}
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="max-h-60 overflow-y-auto space-y-2">
+                      {calculationHistory.length === 0 ? (
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          Chưa có lịch sử tính toán
+                        </p>
+                      ) : (
+                        calculationHistory.map((calc, index) => (
+                          <div key={calc.id} className="p-3 bg-gray-50 rounded-lg text-xs">
+                            <div className="font-medium">{calc.chemical_name}</div>
+                            <div className="text-gray-600">
+                              {calc.mass}g → {calc.molarity.toFixed(4)}M
+                            </div>
+                            <div className="text-gray-500">
+                              {formatDate(calc.created_at)}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              )}
+            </Card>
           </div>
         </div>
       </div>
