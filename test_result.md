@@ -101,3 +101,111 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Tạo app tính nồng độ mol của dung dịch với khả năng tính từ khối lượng chất tan + khối lượng mol phân tử + thể tích dung dịch, có sẵn danh sách chất hóa học phổ biến, chuyển đổi thể tích tự động giữa mL và L, và hiển thị công thức tính toán"
+
+backend:
+  - task: "MongoDB Models and Database Setup"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/models.py, /app/backend/database.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Created Pydantic models for Chemical, CalculationRequest, CalculationResult with validation. Set up MongoDB collections and seed data for 20 common chemicals including NaCl, H2SO4, NaOH, etc."
+
+  - task: "Chemical Database API Endpoints"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented GET /api/chemicals to fetch all chemicals and GET /api/chemicals/{id} for specific chemical lookup"
+
+  - task: "Molarity Calculation API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented POST /api/calculate endpoint that accepts chemical_id or custom_molar_mass, mass, volume, volume_unit and returns calculated molarity with all intermediate values"
+
+  - task: "Calculation History API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented GET /api/calculations for history retrieval and DELETE /api/calculations for clearing history"
+
+frontend:
+  - task: "Frontend Integration with Backend APIs"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/MolarityCalculator.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Integrated frontend with backend APIs - replaced mock data with real API calls to load chemicals, perform calculations, and manage history. Added toast notifications for user feedback."
+
+  - task: "Calculation History UI"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/MolarityCalculator.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added collapsible history section showing recent calculations with timestamps and ability to clear history"
+
+  - task: "Toast Notification System"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js, /app/frontend/src/components/ui/toaster.jsx"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added Toaster component to App.js for user feedback on successful calculations and error handling"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 0
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "MongoDB Models and Database Setup"
+    - "Chemical Database API Endpoints"
+    - "Molarity Calculation API"
+    - "Calculation History API"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Completed backend development with MongoDB models, API endpoints for chemicals, molarity calculation, and history management. Also integrated frontend with backend APIs, removing mock data. Backend is running successfully. Ready for comprehensive backend testing before frontend testing."
