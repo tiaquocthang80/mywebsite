@@ -107,51 +107,63 @@ user_problem_statement: "Tạo app tính nồng độ mol của dung dịch vớ
 backend:
   - task: "MongoDB Models and Database Setup"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/models.py, /app/backend/database.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Created Pydantic models for Chemical, CalculationRequest, CalculationResult with validation. Set up MongoDB collections and seed data for 20 common chemicals including NaCl, H2SO4, NaOH, etc."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: MongoDB connection successful. Database seeded with exactly 20 chemicals as expected. All chemical records have correct structure with id, name, formula, molar_mass, category fields. Key chemicals (NaCl: 58.44 g/mol, H2SO4: 98.08 g/mol, NaOH: 40.00 g/mol) verified. Pydantic models working correctly with proper validation."
 
   - task: "Chemical Database API Endpoints"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented GET /api/chemicals to fetch all chemicals and GET /api/chemicals/{id} for specific chemical lookup"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: GET /api/chemicals returns all 20 chemicals with correct structure. GET /api/chemicals/{id} works for valid IDs (nacl, h2so4, naoh). Error handling verified - returns 404 for invalid chemical IDs. All response formats match ChemicalResponse model."
 
   - task: "Molarity Calculation API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented POST /api/calculate endpoint that accepts chemical_id or custom_molar_mass, mass, volume, volume_unit and returns calculated molarity with all intermediate values"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: POST /api/calculate works perfectly. Chemical_id mode: NaCl 5.84g in 1L = 0.0999M (accurate). Custom_molar_mass mode: 58.44 g/mol gives same result. Volume conversion: 1000mL correctly converts to 1L. Error handling verified: negative mass/volume rejected with 400, missing fields return 422, invalid chemical_id returns 404. Formula verification: Molarity = moles/volume_in_liters is correctly implemented."
 
   - task: "Calculation History API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented GET /api/calculations for history retrieval and DELETE /api/calculations for clearing history"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: GET /api/calculations returns calculation history with correct structure. Calculations are automatically saved after POST /api/calculate (verified count increases). DELETE /api/calculations successfully clears all history (verified 0 calculations remain). All response formats match CalculationResponse model."
 
 frontend:
   - task: "Frontend Integration with Backend APIs"
